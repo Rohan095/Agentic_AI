@@ -1,6 +1,6 @@
 # Agentic
 
-A small tool-using AI agent built with Python and the Google Gemini API. The agent evaluates a user request, chooses between a direct tool call, a multi-step plan, or a final response, and keeps tool observations in an in-memory state object.
+A small tool-using AI agent built with Python, the Google Gemini API, and Hugging Face image generation. The agent evaluates a user request, chooses between a direct tool call, a multi-step plan, or a final response, and keeps tool observations in an in-memory state object.
 
 ## Features
 
@@ -9,7 +9,7 @@ A small tool-using AI agent built with Python and the Google Gemini API. The age
 - Planner support for requests that require multiple steps
 - Tool registry for registering and exposing tools to the model
 - In-memory state for plans, observations, iterations, and status
-- Built-in calculator and current-weather tools
+- Built-in calculator, current-weather, and text-to-image tools
 - Maximum of 10 agent iterations per run
 
 ## Project Structure
@@ -25,21 +25,25 @@ A small tool-using AI agent built with Python and the Google Gemini API. The age
 │   └── tool.py             # Tool data structure
 └── tools/
     ├── calculator.py       # Restricted arithmetic expression tool
+    ├── Image_tool.py       # Hugging Face FLUX image-generation tool
     └── weather.py          # Open-Meteo geocoding and current weather tool
+
+Image_output/               # Generated images; ignored by Git
 ```
 
 ## Requirements
 
 - Python 3.10 or newer
 - A Google Gemini API key
-- Internet access for Gemini and Open-Meteo requests
+- A Hugging Face API key for image generation
+- Internet access for Gemini, Hugging Face, and Open-Meteo requests
 
 Install the dependencies in an activated virtual environment:
 
 ```bash
 python -m venv .venv
 source .venv/bin/activate
-python -m pip install google-genai python-dotenv requests
+python -m pip install google-genai python-dotenv requests huggingface-hub
 ```
 
 On Windows PowerShell, activate the environment with:
@@ -54,9 +58,10 @@ Create a local `.env` file in the project root:
 
 ```env
 GEMINI_API_KEY=your_gemini_api_key
+HUGGINGFACE_API_KEY=your_huggingface_api_key
 ```
 
-The application loads this value with `python-dotenv`. Keep the file private; it is excluded by `.gitignore`.
+The application loads these values with `python-dotenv`. Keep the file private; it is excluded by `.gitignore`.
 
 ## Run
 
@@ -64,14 +69,14 @@ The application loads this value with `python-dotenv`. Keep the file private; it
 python main.py
 ```
 
-The current example request is defined directly in `main.py` and asks the agent to compare temperatures in New York and Los Angeles and calculate the difference. Edit `AgentState(...)` in that file to try another request.
+The current example request is defined directly in `main.py` and asks the agent to generate an image of Ultron rising from the ashes of a destroyed city. Edit `AgentState(...)` in that file to try another request.
 
-The program prints the model's decisions, created plans, tool observations, and final answer. A run stops when it completes, encounters an error, or reaches the ten-iteration limit.
+The program prints the model's decisions, created plans, tool observations, and final answer. Generated images are saved as `Image_output/generated_image.png`. A run stops when it completes, encounters an error, or reaches the ten-iteration limit.
 
 ## How It Works
 
 1. `main.py` loads the API key and creates a Gemini client.
-2. The calculator and weather tools are registered with `ToolRegistry`.
+2. The calculator, weather, and image-generation tools are registered with `ToolRegistry`.
 3. `AgentState` stores the request and the evolving execution context.
 4. Gemini selects one JSON action: `tool_call`, `plan`, or `final`.
 5. `AgentRuntime` validates required arguments and executes selected tools.
@@ -94,6 +99,10 @@ Example expression:
 
 Looks up a city through the Open-Meteo geocoding API and returns its current temperature and wind speed in metric units. It does not require a separate weather API key.
 
+### Image Generator
+
+Sends a text prompt to the Hugging Face `black-forest-labs/FLUX.1-schnell` model and saves the generated PNG to `Image_output/generated_image.png`. It requires `HUGGINGFACE_API_KEY`.
+
 ## Adding a Tool
 
 1. Create a function in `tools/`.
@@ -105,10 +114,10 @@ Once registered, its definition is included in the model prompt and it can be se
 
 ## Current Limitations
 
-- The user request is hard-coded in `main.py`; there is no command-line or interactive input yet.
+- The user request and model configuration are hard-coded in `main.py`; there is no command-line or interactive input yet.
 - The planner creates a plan, but the runtime relies on Gemini to choose each subsequent tool call rather than executing plan steps through a dedicated plan executor.
 - Dependency versions are not pinned in a requirements file.
-- Calculator failures raised by the tool function are not converted into structured runtime errors.
+- Exceptions raised by tool functions are not converted into structured runtime errors by `AgentRuntime`.
 - The model name is currently hard-coded as `gemini-3.5-flash-lite`.
 
 ## Git and Local Files
@@ -120,5 +129,6 @@ The repository ignores local secrets and development artifacts, including:
 - Python bytecode and `__pycache__/`
 - macOS `.DS_Store` files
 - `.github/agents/`, which contains local VS Code custom agents
+- `Image_output/`, which contains generated images
 
 These files should remain local and should not be committed or pushed.

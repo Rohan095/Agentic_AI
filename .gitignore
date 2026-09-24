@@ -7,3 +7,4 @@ __pycache__/
 *.py[cod]
 .DS_Store
 .github/agents/
+Image_output

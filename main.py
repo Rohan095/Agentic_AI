@@ -2,6 +2,7 @@ from agent.registry import ToolRegistry
 from agent.runtime import AgentRuntime
 from tools.calculator import calculator_tool 
 from tools.weather import weather_tool
+from tools.Image_tool import image_generator_tool
 from agent.state import AgentState
 from agent.planner import Planner
 from google import genai
@@ -25,6 +26,7 @@ try:
     registry = ToolRegistry()
     registry.register(calculator_tool)
     registry.register(weather_tool)
+    registry.register(image_generator_tool)
     tool_definitions = registry.get_tool_definitions()
 except Exception as e:
     print("ERROR_REGISTERING_TOOLS :", e)
@@ -37,7 +39,7 @@ except Exception as e:
     exit(1)
 
 try:
-    state = AgentState("Coompare the temperature in New York and Los Angeles and calculate the difference.")
+    state = AgentState("Create a image ultron rising from the ashes of a destroyed city, with a dramatic sunset in the background.")
 except Exception as e:
     print("ERROR_INITIALIZING_AGENT_STATE:", e)
     exit(1)
